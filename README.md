@@ -29,12 +29,72 @@
 
 ## 🛠️ Installation
 
+### 📦 Téléchargement des binaires
+
+Téléchargez la dernière version depuis [GitHub Releases](https://github.com/bullo95/PostBoy/releases).
+
+#### macOS (ARM64)
+
+**Option 1 : DMG (recommandé)**
+```bash
+# Si macOS indique que le fichier est "endommagé", exécuter :
+xattr -cr ~/Downloads/Postboy-1.0.0-arm64.dmg
+open ~/Downloads/Postboy-1.0.0-arm64.dmg
+```
+
+**Option 2 : ZIP (recommandé)**
+```bash
+# Télécharger et décompresser
+unzip Postboy-1.0.1-arm64-mac.zip
+
+# Déplacer dans Applications
+mv Postboy.app /Applications/
+
+# Re-signer l'application localement (SOLUTION DÉFINITIVE)
+codesign --force --deep --sign - /Applications/Postboy.app
+
+# Lancer l'application
+open /Applications/Postboy.app
+```
+
+**Note** : L'application n'est pas signée avec un certificat Apple Developer. La commande `codesign` re-signe l'app localement avec un certificat ad-hoc, ce qui permet à macOS de l'accepter.
+
+**Si le message "endommagé" persiste** :
+```bash
+# Supprimer la quarantaine
+xattr -d com.apple.quarantine /Applications/Postboy.app
+# Puis re-signer
+codesign --force --deep --sign - /Applications/Postboy.app
+```
+
+#### Linux (x64)
+
+**Debian/Ubuntu (.deb)**
+```bash
+sudo dpkg -i postboy_1.0.0_amd64.deb
+# Si des dépendances manquent :
+sudo apt-get install -f
+```
+
+**AppImage (universel)**
+```bash
+chmod +x Postboy-1.0.0.AppImage
+./Postboy-1.0.0.AppImage
+```
+
+#### Windows (ARM64)
+
+- **Installateur** : `Postboy Setup 1.0.0.exe`
+- **Portable** : `Postboy 1.0.0.exe`
+
+### 🔧 Développement
+
 ### Prérequis
 
 - Node.js 18+ 
 - npm ou yarn
 
-### Développement
+### Installation
 
 ```bash
 # Installer les dépendances
