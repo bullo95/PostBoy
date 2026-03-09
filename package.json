@@ -1,6 +1,6 @@
 {
   "name": "postboy",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Open source API client for Mac, Linux, and Windows",
   "homepage": "https://github.com/brunodomenech/postboy",
   "main": "dist/electron/main.js",
