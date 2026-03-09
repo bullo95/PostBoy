@@ -12,9 +12,8 @@ const createWindow = () => {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      sandbox: true,
+      sandbox: false,
       webSecurity: true,
-      preload: path.join(__dirname, 'preload.js'),
     },
     titleBarStyle: 'default',
     backgroundColor: '#1e1e1e',
