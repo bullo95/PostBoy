@@ -6,6 +6,35 @@ import { isValidUrl, RateLimiter, logSecurityEvent } from './validation'
 // Rate limiter : 10 requêtes par seconde max
 const rateLimiter = new RateLimiter(10, 1000)
 
+// Détecter le type de contenu
+const isBinaryContentType = (contentType: string): boolean => {
+  const binaryTypes = [
+    'image/',
+    'application/octet-stream',
+    'application/pdf',
+    'application/zip',
+    'application/x-rar',
+    'audio/',
+    'video/',
+    'font/',
+  ]
+  return binaryTypes.some(type => contentType.startsWith(type))
+}
+
+// Formater les données binaires pour affichage
+const formatBinaryResponse = (contentType: string, size: number): string => {
+  if (contentType.startsWith('image/')) {
+    return `📷 Image (${contentType}) - ${formatSize(size)}\n\nLes images ne peuvent pas être affichées en format texte.\nTéléchargez le fichier ou utilisez un viewer dédié.`
+  }
+  return `📄 Fichier binaire (${contentType}) - ${formatSize(size)}\n\nCe type de fichier ne peut pas être affiché en format texte.`
+}
+
+const formatSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+}
+
 export const sendRequest = async (
   request: Request,
   environment: Environment | null = null
@@ -50,6 +79,7 @@ export const sendRequest = async (
       headers,
       params,
       validateStatus: () => true,
+      responseType: 'arraybuffer', // Toujours recevoir en binaire pour gérer tous les cas
     }
 
     if (request.auth.type === 'bearer' && request.auth.bearer) {
@@ -117,14 +147,34 @@ export const sendRequest = async (
     const response = await axios(config)
     const endTime = performance.now()
 
-    let responseData: string
-    if (typeof response.data === 'object') {
-      responseData = JSON.stringify(response.data, null, 2)
-    } else {
-      responseData = String(response.data)
-    }
+    // Récupérer le Content-Type
+    const contentType = response.headers['content-type'] || ''
+    const responseSize = response.data ? response.data.byteLength : 0
 
-    const responseSize = new Blob([responseData]).size
+    // Gérer les réponses binaires vs texte
+    let responseData: string
+    if (isBinaryContentType(contentType)) {
+      // Réponse binaire (image, PDF, etc.)
+      responseData = formatBinaryResponse(contentType, responseSize)
+    } else {
+      // Réponse texte/JSON
+      try {
+        // Décoder l'arraybuffer en string
+        const decoder = new TextDecoder('utf-8')
+        const textData = decoder.decode(response.data)
+        
+        // Essayer de parser comme JSON pour le formater
+        try {
+          const jsonData = JSON.parse(textData)
+          responseData = JSON.stringify(jsonData, null, 2)
+        } catch {
+          // Ce n'est pas du JSON, afficher le texte brut
+          responseData = textData
+        }
+      } catch (decodeError) {
+        responseData = `Erreur de décodage: ${decodeError instanceof Error ? decodeError.message : String(decodeError)}`
+      }
+    }
 
     return {
       status: response.status,
