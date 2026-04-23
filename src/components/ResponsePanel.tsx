@@ -1,5 +1,11 @@
 import { useState } from 'react'
 import { useStore } from '../store/useStore'
+import { Light as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs'
+import json from 'react-syntax-highlighter/dist/esm/languages/hljs/json'
+
+// Enregistrer le langage JSON
+SyntaxHighlighter.registerLanguage('json', json)
 
 export default function ResponsePanel() {
   const [activeTab, setActiveTab] = useState<'body' | 'headers'>('body')
@@ -25,6 +31,14 @@ export default function ResponsePanel() {
     if (bytes < 1024) return `${bytes} B`
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+  }
+
+  // Détecter si le contenu est du JSON
+  const isJsonContent = (data: string): boolean => {
+    const trimmed = data.trim()
+    return (trimmed.startsWith('{') || trimmed.startsWith('[')) && 
+           !trimmed.includes('📷') && 
+           !trimmed.includes('📄')
   }
 
   return (
@@ -75,9 +89,29 @@ export default function ResponsePanel() {
 
       <div className="flex-1 overflow-y-auto scrollbar-thin p-4">
         {activeTab === 'body' && (
-          <pre className="bg-[#252526] p-4 rounded border border-gray-700 overflow-x-auto">
-            <code className="text-sm font-mono text-gray-200">{currentResponse.data}</code>
-          </pre>
+          isJsonContent(currentResponse.data) ? (
+            <div className="bg-[#252526] rounded border border-gray-700 overflow-hidden">
+              <SyntaxHighlighter
+                language="json"
+                style={atomOneDark}
+                customStyle={{
+                  margin: 0,
+                  padding: '16px',
+                  background: 'transparent',
+                  fontSize: '14px',
+                  lineHeight: '1.5',
+                }}
+              >
+                {currentResponse.data}
+              </SyntaxHighlighter>
+            </div>
+          ) : (
+            <pre className="bg-[#252526] p-4 rounded border border-gray-700 overflow-x-auto">
+              <code className="text-sm font-mono text-gray-200 whitespace-pre-wrap">
+                {currentResponse.data}
+              </code>
+            </pre>
+          )
         )}
 
         {activeTab === 'headers' && (
